@@ -1,0 +1,133 @@
+#!/bin/bash
+
+echo
+echo "------------------------------------"
+echo $(date)
+echo "------------------------------------"
+echo
+
+i=0
+fast_loop=false
+failed_attempts=0
+
+function execute_reliably {
+
+    command_to_exec="$1"
+    [ "$command_to_exec" == "" ] && return 99
+
+    number_of_attempts="$2"
+    [ "$number_of_attempts" == "" ] && number_of_attempts=5
+
+    seconds_between_attempts="$3"
+    [ "$seconds_between_attempts" == "" ] && seconds_between_attempts=2
+
+    command_succeeded=false
+
+    for j in $(seq 1 "$number_of_attempts")
+    do
+        if $command_to_exec
+	then
+	    echo "Executed command $command_to_exec at $j attempt"
+            return 0
+	    # command_succeeded=true
+	    # break
+	fi
+        sleep "$seconds_between_attempts"
+        if [ "$fast_loop" == true ]
+        then
+            echo "Skipped command $command_to_exec in fast loop mode"
+            break
+        fi
+    done
+    
+    echo "Command $command_to_exec failed ($number_of_attempts attempts)"
+    fast_loop=true
+    echo "Entered fast loop mode"
+    
+    return 1
+}
+
+function check_connection {
+    ping=$(ping -c1 8.8.8.8 && ping -c1 ya.ru)
+    status=$?
+    echo "ping result $status"
+    return $status
+}
+
+while true
+do
+    execute_reliably "sudo route add default gw 192.168.99.1 dev eth1"
+    execute_reliably "sudo ifmetric eth1"
+    # execute_reliably 'curl --header "Referer: http://192.168.99.1/index.html" http://192.168.99.1/goform/goform_set_cmd_process\?goformId\=CONNECT_NETWORK'
+    execute_reliably "sudo ip route del default dev wlan0" 1
+    for j in $(seq 1 8)
+    do
+        curl --header "Referer: http://192.168.99.1/index.html" http://192.168.99.1/goform/goform_set_cmd_process\?goformId\=CONNECT_NETWORK
+#        if [ "$fast_loop" == true ]
+#        then
+#            break
+#        fi
+        sleep 3
+    done
+    
+    while check_connection
+    do
+        if [ "$fast_loop" == true ]
+        then
+            echo "Connection restored, exiting fast loop mode"
+            fast_loop=false
+        fi
+	sleep 5
+    done
+    
+    execute_reliably "sudo ifdown --force eth1" 1
+    execute_reliably "sudo ifup eth1" 1
+done
+
+
+
+
+while true
+do
+
+until [ $(sudo ip route | grep -c eth1) -ge 2 ]
+do
+    echo "Waiting for eth1..."
+    sleep 1
+    (( i++ ))
+    if [ $i -ge 10 ]
+    then
+        echo "Too long delay, adding default gateway and continue"
+        until sudo route add default gw 192.168.99.1 dev eth1
+        do
+            echo "Route add default gw is ill, trying again..."
+            sleep 3
+        done
+        break
+    fi
+done
+
+until sudo ifmetric eth1
+do
+    echo "ifmetric eth1 is ill, trying again..."
+    sleep 3
+done
+sleep 1
+
+until curl --header "Referer: http://192.168.99.1/index.html" http://192.168.99.1/goform/goform_set_cmd_process\?goformId\=CONNECT_NETWORK
+do
+    echo "Curl is not healthy, trying again..."
+    sleep 3
+done
+
+while ping -c1 8.8.8.8 && ping -c1 ya.ru
+do
+    sleep 5
+done
+
+echo "Reconnecting..."
+sudo ifdown --force eth1
+sudo ifup eth1
+
+done
+

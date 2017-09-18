@@ -1,0 +1,21 @@
+#18082017 smirart
+#19092017
+
+
+[Unit]
+Description=Sakis modem connector       
+#Requires=mavros.service
+#After=mavros.service
+#Requires=pigpiod.serice
+#After=pigpiod.service
+
+[Service]
+ExecStart=/home/pi/modem_keeper/run/sakis.sh sakis.conf
+WorkingDirectory=/home/pi/modem_keeper/run
+User=pi
+Group=pi
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

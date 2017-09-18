@@ -1,0 +1,91 @@
+global st, statProgVersion, statProgSubVersion, statFileComplete
+
+st['currHr'] = currHour
+st['today'] = today
+st['yesday'] = yesterday
+st['dateToday'] = dateToday
+st['weekDay'] = weekDay
+st['currMonth'] = currMonth
+st['nextMonthStartSec'] = long(mktime((datetime.now().year, st['currMonth']+1, conf['monthStartDay'], 0, 0, 0, 0, 0, 0)))
+st['currCalendarMonth'] = currCalendarMonth
+st['currYear'] = int(dateToday[0:4])
+st['sessStartTmSaved'] = sessionStartTimeSaved
+st['offlSince'] = offlineSince
+st['rxBytes'] = rxBytesSession
+st['txBytes'] = txBytesSession
+st['rxBTot'] = rxkBytesTotal * 1000
+st['txBTot'] = txkBytesTotal * 1000
+st['rxBSessStart'] = rxkBytesSessionStart * 1000
+st['txBSessStart'] = txkBytesSessionStart * 1000
+st['rxBytes'] = rxkBytesSession * 1000
+st['txBytes'] = txkBytesSession * 1000
+st['rxBQHrStart'] = rxkBytesHourStart * 1000
+st['txBQHrStart'] = txkBytesHourStart * 1000
+st['rxBHrStart'] = rxkBytesHourStart * 1000
+st['txBHrStart'] = txkBytesHourStart * 1000
+st['rxBTodayStart'] = rxkBytesTodayStart * 1000
+st['txBTodayStart'] = txkBytesTodayStart * 1000
+st['rxBToday'] = rxkBytesToday * 1000
+st['txBToday'] = txkBytesToday * 1000
+st['rxBYesday'] = rxkBytesYesterday * 1000
+st['txBYesday'] = txkBytesYesterday * 1000
+st['rxBMonthStart'] = rxkBytesMonthStart * 1000
+st['txBMonthStart'] = txkBytesMonthStart * 1000
+st['rxBMonth'] = rxkBytesMonth * 1000
+st['txBMonth'] = txkBytesMonth * 1000
+st['bMonthMin'] = kBytesMonthMin * 1000
+st['bMonthMinDate'] = kBytesMonthMinDate
+st['bMonthMax'] = kBytesMonthMax * 1000
+st['bMonthMaxDate'] = kBytesMonthMaxDate
+st['rxBHrs'] = map(lambda x: int(x*1000), rxkBytesHours)
+st['txBHrs'] = map(lambda x: int(x*1000), txkBytesHours)
+st['rxBHrsYesday'] = map(lambda x: int(x*1000), rxkBytesHoursYesterday)
+st['txBHrsYesday'] = map(lambda x: int(x*1000), txkBytesHoursYesterday)
+st['rxBQHrs'] = map(lambda x: [x/4,x/4,x/4,x/4], st['rxBHrs'])
+st['txBQHrs'] = map(lambda x: [x/4,x/4,x/4,x/4], st['txBHrs'])
+st['rxBQHrsYesday'] = map(lambda x: [x/4,x/4,x/4,x/4], st['rxBHrsYesday'])
+st['txBQHrsYesday'] = map(lambda x: [x/4,x/4,x/4,x/4], st['txBHrsYesday'])
+st['rxBDays'] = map(lambda x: long(x*1000), rxkBytesDays)
+st['txBDays'] = map(lambda x: long(x*1000), txkBytesDays)
+st['rxBDaysLastMonth'] = map(lambda x: long(x*1000), rxkBytesDaysLastmonth)
+st['txBDaysLastMonth'] = map(lambda x: long(x*1000), txkBytesDaysLastmonth)
+st['rxBHrsAcc'] = map(lambda x: long(x*1000), rxkBytesHoursAcc)
+st['txBHrsAcc'] = map(lambda x: long(x*1000), txkBytesHoursAcc)
+st['bHrsAccCtr'] = kBytesHoursAccCtr
+st['rxBQHrsAcc'] = map(lambda x: [x/4,x/4,x/4,x/4], st['rxBHrsAcc'])
+st['txBQHrsAcc'] = map(lambda x: [x/4,x/4,x/4,x/4], st['txBHrsAcc'])
+st['bQHrsAccCtr'] = map(lambda x: [x,x,x,x], st['bHrsAccCtr'])
+try: st['rxBHrsWAcc'] = map(lambda x,y: x-y, kBytesHoursWAcc, txkBytesHoursWAcc)
+except: pass
+try: st['txBHrsWAcc'] = txkBytesHoursWAcc
+except: pass
+try: st['bHrsWAccCtr'] = kBytesHoursWAccCtr
+except: pass
+st['hrsMaxRateAcc'] = map(lambda x: x*1000, hoursMaxRateAcc)
+st['hrsMaxRateAccCtr'] = hoursMaxRateAccCtr
+st['qHrsMaxRateAcc'] = map(lambda x: [x,x,x,x], st['hrsMaxRateAcc'])
+st['qHrsMaxRateAccCtr'] = map(lambda x: [x,x,x,x], st['hrsMaxRateAccCtr'])
+try: st['hrsMaxRateWAcc'] = map(lambda x: x*1000, hoursMaxRateWAcc)
+except: pass
+try: st['hrsMaxRateWAccCtr'] = hoursMaxRateWAccCtr
+except: pass
+st['hrsAvgRateAcc'] = map(lambda x: x*1000, hoursAvgRateAcc)
+st['hrsAvgRateAccCtr'] = hoursAvgRateAccCtr
+st['qHrsAvgRateAcc'] = map(lambda x: [x,x,x,x], st['hrsAvgRateAcc'])
+st['qHrsAvgRateAccCtr'] = map(lambda x: [x,x,x,x], st['hrsAvgRateAccCtr'])
+try: st['hrsAvgRateWAcc'] = map(lambda x: x*1000, hoursAvgRateWAcc)
+except: pass
+try: st['hrsAvgRateWAccCtr'] = hoursAvgRateWAccCtr
+except: pass
+st['rateSecondsHr'] = [0]
+st['rateSecondsQHr'] = [0]
+st['hrs95RateAcc'] = [0] * 24
+st['hrs50RateAcc'] = [0] * 24
+st['hrs95RateAccCtr'] = [0] * 24
+st['qHrs95RateAcc'] = map(lambda x: [x,x,x,x], st['hrs95RateAcc'])
+st['qHrs50RateAcc'] = map(lambda x: [x,x,x,x], st['hrs50RateAcc'])
+st['qHrs95RateAccCtr'] = map(lambda x: [x,x,x,x], st['hrs95RateAccCtr'])
+st['hrs95RateWAcc'] = [0] * 24 * 7
+st['hrs50RateWAcc'] = [0] * 24 * 7
+st['hrs95RateWAccCtr'] = [0] * 24 * 7
+st['ifaceName'] = ''

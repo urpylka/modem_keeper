@@ -1,0 +1,53 @@
+#!/bin/bash
+
+echo
+echo "------------------------------------"
+echo $(date)
+echo "------------------------------------"
+echo
+
+i=0
+
+while true
+do
+
+until [ $(sudo ip route | grep -c eth1) -ge 2 ]
+do
+    echo "Waiting for eth1..."
+    sleep 1
+    (( i++ ))
+    if [ $i -ge 10 ]
+    then
+        echo "Too long delay, adding default gateway and continue"
+        until sudo route add default gw 192.168.99.1 dev eth1
+	do
+	    echo "Route add default gw is ill, trying again..."
+	    sleep 3
+	done
+        break
+    fi
+done
+
+until sudo ifmetric eth1
+do
+    echo "ifmetric eth1 is ill, trying again..."
+    sleep 3
+done
+sleep 1
+
+until curl --header "Referer: http://192.168.99.1/index.html" http://192.168.99.1/goform/goform_set_cmd_process\?goformId\=CONNECT_NETWORK
+do
+    echo "Curl is not healthy, trying again..."
+    sleep 3
+done
+
+while ping -c1 8.8.8.8 && ping -c1 ya.ru
+do
+    sleep 5
+done
+
+echo "Reconnecting..."
+sudo ifdown --force eth1
+sudo ifup eth1
+
+done

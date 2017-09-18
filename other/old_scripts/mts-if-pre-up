@@ -1,0 +1,9 @@
+#!/bin/sh
+echo "$IFACE" >> /home/pi/if-post-up.d-check
+if [ "$IFACE" = eth1 ]; then
+	echo "Got it!" >> /home/pi/if-post-up.d-check
+	ifmetric eth1
+	curl --header "Referer: http://192.168.99.1/index.html" http://192.168.99.1/goform/goform_set_cmd_process\?goformId\=CONNECT_NETWORK
+fi
+exit 0
+
