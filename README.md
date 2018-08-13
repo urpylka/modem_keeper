@@ -43,6 +43,12 @@ For disable service use:
 sudo systemctl disable umtskeeper
 ```
 
+Also you can create umtskeeper config and call umtskeeper with param-file:
+
+```bash
+./umtskeeper --conf umtskeeper.conf
+```
+
 ### sakis3g
 
 Running params of sakis3g for MTS & Beeline:
