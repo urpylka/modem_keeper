@@ -1,12 +1,15 @@
 # Modem keeper
 
-Modem keeper consists of umtskeeper, sakis3g, and wvdial. You can use their separatly.
-* `umtskeeper` - utility works with sakis3g for traffic accounting.
-* `sakis3g` - script for connection modem to internet.
-* `wvdial` - dialer.
+Modem keeper is package consists of umtskeeper, sakis3g, and wvdial. You can use their separatly.
+
+* **umtskeeper** - utility works with sakis3g for **traffic accounting** and works as **connection keeper**.
+* **sakis3g** - script for connecting modem to internet.
+* **wvdial** - simple dialer.
 
 ## Install
+
 ### umtskeeper
+
 For using 3G/4G modems on Raspberry Pi you should run `umtskeeper.service`:
 
 ```bash
@@ -43,30 +46,28 @@ sudo systemctl disable umtskeeper
 ### sakis3g
 
 Running params of sakis3g for MTS & Beeline:
+
 * `USBMODEM`: if Huawei E352 or E392 `12d1:1506`
 * `CUSTOM_APN`: `internet.mts.ru` or `internet.beeline.ru`
 * `SIM_PIN`: usualy `0000`
 * `APN_USER`: `mts` or `beeline`
 * `APN_PASS`: `mts` or `beeline`
 
-```bash
-USBMODEM='12d1:1506'
-CUSTOM_APN='internet.mts.ru'
-SIM_PIN='0000'
-APN_USER='mts'
-APN_PASS='mts'
-```
+Manual running:
 
-For manual running:
 ```bash
+# For re-connect to internet:
 sudo ./sakis3g ignore disconnect connect --sudo --console USBINTERFACE='0' OTHER='USBMODEM' USBMODEM='12d1:1506' APN='CUSTOM_APN' CUSTOM_APN='internet.beeline.ru' SIM_PIN='0000' APN_USER='beeline' APN_PASS='beeline'
 
+# For connect to internet:
 sudo ./sakis3g ignore connect --sudo --console USBINTERFACE='0' OTHER='USBMODEM' USBMODEM='12d1:1506' APN='CUSTOM_APN' CUSTOM_APN='internet.beeline.ru' SIM_PIN='0000' APN_USER='beeline' APN_PASS='beeline'
 
+# For disconnect from internet:
 sudo ./sakis3g ignore disconnect --sudo --console USBINTERFACE='0' OTHER='USBMODEM' USBMODEM='12d1:1506' APN='CUSTOM_APN' CUSTOM_APN='internet.beeline.ru' SIM_PIN='0000' APN_USER='beeline' APN_PASS='beeline'
 ```
 
-Create service
+Creating service:
+
 ```bash
 git clone https://github.com/urpylka/modem_keeper.git
 
@@ -84,91 +85,76 @@ EOF
 ```
 
 Simple internet keeper for sakis3g:
+
 ```bash
 #!/bin/bash
-WORK_DIRECTORY="/home/pi/modem_keeper"
 
-if [[ -z $1 ]]
-then
- echo
- echo "--------------------------------------------------------------------------------------------"
- echo $(date) "Internet connection and checker script"
- echo "Конфигурационный файл не задан"
- echo "--------------------------------------------------------------------------------------------"
- echo
- echo >> $WORK_DIRECTORY/run/sakis.log
- echo "--------------------------------------------------------------------------------------------" >> $WORK_DIRECTORY/run/sakis.log
- echo $(date) "Internet connection checker and switcher script started" >> $WORK_DIRECTORY/run/sakis.log
- echo "Конфигурационный файл не задан" >> $WORK_DIRECTORY/run/sakis.log
- echo "--------------------------------------------------------------------------------------------" >> $WORK_DIRECTORY/run/sakis.log
- echo >> $WORK_DIRECTORY/run/sakis.log
-else
- source $1
-echo
-echo "--------------------------------------------------------------------------------------------"
-echo $(date) "Internet connection and checker script"
-echo $modem_name", "$operator_name
-echo "--------------------------------------------------------------------------------------------"
-echo
-echo >> $WORK_DIRECTORY/run/sakis.log
-echo "--------------------------------------------------------------------------------------------" >> $WORK_DIRECTORY/run/sakis.log
-echo $(date) "Internet connection checker and switcher script started" >> $WORK_DIRECTORY/run/sakis.log
-echo $modem_name", "$operator_name >> $WORK_DIRECTORY/run/sakis.log
-echo "--------------------------------------------------------------------------------------------" >> $WORK_DIRECTORY/run/sakis.log
-echo >> $WORK_DIRECTORY/run/sakis.log
+WORK_DIR="."
+LOG_PATH="$WORK_DIR/sakis3g.log"
 
-source ../other/check_modem.sh
-check_modem_connection_log $WORK_DIRECTORY/run/sakis.log
+cat <<EOF | tee -a $LOG_PATH
+--------------------------------------------------------------------------------------------
+$(date) Internet connection and checker script
+--------------------------------------------------------------------------------------------
+EOF
 
-echo $(date) "try connect"
-echo $(date) "try connect" >> $WORK_DIRECTORY/run/sakis.log
-sudo $WORK_DIRECTORY/run/sakis3g connect --sudo --console USBINTERFACE='0' OTHER='USBMODEM' USBMODEM=$USBMODEM APN='CUSTOM_APN' CUSTOM_APN=$CUSTOM_APN SIM_PIN=$SIM_PIN APN_USER=$APN_USER APN_PASS=$APN_PASS >> $WORK_DIRECTORY/run/sakis.log# 2>&1
-#sleep 10
-if ping 8.8.8.8 -n -q -i 0.2 -c 3 > /dev/null # send ping 3 times with 0.2 second interval
- then
-  echo $(date) "connected"
-  echo $(date) "connected" >> $WORK_DIRECTORY/run/sakis.log
-fi
+USBMODEM='12d1:1506'
+CUSTOM_APN='internet.mts.ru'
+SIM_PIN='0000'
+APN_USER='mts'
+APN_PASS='mts'
 
-while true
-do
- if ping 8.8.8.8 -n -q -i 0.2 -c 3 > /dev/null # send ping 3 times with 0.2 second interval
- then
-  sleep 1
- else
-  while true
-  do
-   check_modem_connection_log $WORK_DIRECTORY/run/sakis.log
-   echo $(date) "no internet -> try reconnect"
-   echo $(date) "no internet -> try reconnect" >> $WORK_DIRECTORY/run/sakis.log
-   sudo $WORK_DIRECTORY/run/sakis3g ignore disconnect connect --sudo --console USBINTERFACE='0' OTHER='USBMODEM' USBMODEM=$USBMODEM APN='CUSTOM_APN' CUSTOM_APN=$CUSTOM_APN SIM_PIN=$SIM_PIN APN_USER=$APN_USER APN_PASS=$APN_PASS >> $WORK_DIRECTORY/run/sakis.log
-   if ping 8.8.8.8 -n -q -i 0.2 -c 3 > /dev/null # send ping 3 times with 0.2 second interval
-   then
-    echo $(date) "connected"
-    echo $(date) "connected" >> $WORK_DIRECTORY/run/sakis.log
-    break
-   fi
+check_modem_connection() {
+  while true; do
+    if [[ $(lsusb -d $1) ]]; then break;
+    else
+      sleep 1
+      echo "USB modem not connected." | tee -a $LOG_PATH
+    fi
   done
- fi
-done
+}
+
+echo "$(date) try connect" | tee -a $LOG_PATH
+sudo $WORK_DIR/sakis3g connect --sudo --console USBINTERFACE='0' OTHER='USBMODEM' USBMODEM=$USBMODEM APN='CUSTOM_APN' CUSTOM_APN=$CUSTOM_APN SIM_PIN=$SIM_PIN APN_USER=$APN_USER APN_PASS=$APN_PASS >> $LOG_PATH# 2>&1
+#sleep 10
+
+if ping 8.8.8.8 -n -q -i 0.2 -c 3 -W 1 > /dev/null 2>&1
+then echo "$(date) connected" | tee -a $LOG_PATH
 fi
+
+while true; do
+  if ping 8.8.8.8 -n -q -i 0.2 -c 3 -W 1 > /dev/null 2>&1
+  then sleep 1
+  else
+    while true; do
+      check_modem_connection $USBMODEM
+      echo "$(date) no internet -> try reconnect" | tee -a $LOG_PATH
+      sudo $WORK_DIR/sakis3g ignore disconnect connect --sudo --console USBINTERFACE='0' OTHER='USBMODEM' USBMODEM=$USBMODEM APN='CUSTOM_APN' CUSTOM_APN=$CUSTOM_APN SIM_PIN=$SIM_PIN APN_USER=$APN_USER APN_PASS=$APN_PASS >> $LOG_PATH
+      if ping 8.8.8.8 -n -q -i 0.2 -c 3 -W 1 > /dev/null 2>&1; then
+        echo $(date) "connected" | tee -a $LOG_PATH
+        break
+      fi
+    done
+  fi
+done
 ```
 
 ### wvdial
 
-For install
+For install:
+
 ```bash
 sudo apt install wvdial
 ```
 
-For run use, `PATH_TO_SPECIFIC_CONF` by default `/etc/wvdial.conf`:
+For run use (`PATH_TO_SPECIFIC_CONF` by default `/etc/wvdial.conf`):
+
 ```bash
 sudo wvdial <PATH_TO_SPECIFIC_CONF>
 ```
 
-`wvdial` will try to auto create `/etc/wvdial.conf` in the first running. It may doesn't work.
+`wvdial` will try to auto create `/etc/wvdial.conf` in the first running. It may doesn't work. For fix this use this config:
 
-Create config
 ```bash
 cat <<EOF | sudo tee /etc/wvdial.conf > /dev/null
 [Dialer Defaults]
@@ -186,43 +172,35 @@ Baud = 57600
 EOF
 ```
 
-And also I create simple internet keeper:
+Also I created simple internet keeper:
+
 ```bash
 #!/bin/bash
 
-echo
-echo "--------------------------------------------------------------------------------------------"
-echo $(date) "Internet connection and checker script"
-echo "--------------------------------------------------------------------------------------------"
-echo
-echo >> /home/pi/autocopter/3g_modem/wvdial.log
-echo "--------------------------------------------------------------------------------------------" >> /home/pi/autocopter/3g_modem/wvdial.log
-echo $(date) "Internet connection checker and switcher script started" >> /home/pi/autocopter/3g_modem/wvdial.log
-echo "--------------------------------------------------------------------------------------------" >> /home/pi/autocopter/3g_modem/wvdial.log
-echo >> /home/pi/autocopter/3g_modem/wvdial.log
+WORK_DIR="."
+LOG_PATH="$WORK_DIR/wvdial.log"
 
-while true
-do
- if ping 8.8.8.8 -n -q -i 0.2 -c 3 > /dev/null # send ping 3 times with 0.2 second interval
- then
-  sleep 1
- else
-  while true
-  do
-   echo $(date) "no internet -> try reconnect"
-   echo $(date) "no internet -> try reconnect" >> /home/pi/autocopter/3g_modem/wvdial.log
-   sudo pkill wvdial >> /home/pi/autocopter/3g_modem/wvdial.log
-   sudo wvdial >> /home/pi/autocopter/3g_modem/wvdial.log
-   if ping 8.8.8.8 -n -q -i 0.2 -c 3 > /dev/null # send ping 3 times with 0.2 second interval
-   then
-    echo $(date) "connected"
-    echo $(date) "connected" >> /home/pi/autocopter/3g_modem/wvdial.log
-    break
-   fi
-  done
- fi
+cat <<EOF | tee -a $LOG_PATH
+--------------------------------------------------------------------------------------------
+$(date) Internet connection and checker script
+--------------------------------------------------------------------------------------------
+EOF
+
+while true; do
+  if ping 8.8.8.8 -n -q -i 0.2 -c 3 -W 1 > /dev/null 2>&1; then
+    sleep 1
+  else
+    while true; do
+      echo "$(date) no internet -> try reconnect" | tee -a $LOG_PATH
+      sudo pkill wvdial >> $LOG_PATH
+      sudo wvdial >> $LOG_PATH
+      if ping 8.8.8.8 -n -q -i 0.2 -c 3 -W 1 > /dev/null 2>&1; then
+        echo "$(date) connected" | tee -a $LOG_PATH
+        break
+      fi
+    done
+  fi
 done
-fi
 ```
 
 ## Other
