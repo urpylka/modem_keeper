@@ -216,3 +216,8 @@ done
 * Tested on Huawei E352.
 * For debug use `wvdial`
 * Some OS doesn't consist driver, install `usb-modeswitch`
+
+## Sources
+
+* Маленький британский шпион https://habrahabr.ru/company/xakep/blog/183760/краткое
+* Краткое руководство по работе с minicom http://ixnfo.com/minicom.html
